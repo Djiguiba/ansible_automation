@@ -1,0 +1,74 @@
+---
+- hosts: switches_distribution
+  tasks:
+
+    - name: Read link aggregation groups from CSV file
+      community.general.read_csv:
+        path: "/home/day/ansible/templates/csv_files/SW1_Dist_Config/Link_Aggregation.csv"
+      register: lag
+      delegate_to: localhost
+        
+    - name: Aggregation group configurations through CSV file
+      cisco.ios.ios_lag_interfaces:
+        config:
+          - name: "Port-channel{{ item_lag.group }}"
+            members:
+              - member: "{{ item_lag.interfaces }}"
+                mode: "{{ item_lag.mode }}"
+        state: merged
+      loop: "{{ lag.list }}"
+      loop_control:
+        loop_var: item_lag
+
+    - name: Read vlans from CSV file
+      community.general.read_csv:
+        path: "/home/day/ansible/templates/csv_files/SW1_Dist_Config/Vlan.csv"
+      register: vlans
+      delegate_to: localhost
+
+    - name: VLANs creation
+      cisco.ios.ios_vlans:
+        config:
+          - name: "{{ vlan.name_vlan }}"
+            vlan_id: "{{ vlan.id_vlan | int }}"
+            state: active
+      loop: "{{ vlans.list }}"
+      loop_control:
+        loop_var: vlan
+
+    - name: Read interfaces state from CSV file
+      community.general.read_csv:
+        path: "/home/day/ansible/templates/csv_files/SW1_Dist_Config/State_Port_Interfaces.csv"
+      register: state_ports
+    
+    - name: Configure interfaces state
+      cisco.ios.ios_interfaces:
+        config:
+          - name: "{{ state_port.interfaces }}"
+            #description:
+            enabled: true
+        state: merged
+      loop: "{{ state_ports.list }}"
+      loop_control:
+        loop_var: state_port
+
+    - name: Configure dot1q encapsulation for l2 interfaces
+      cisco.ios.ios_l2_interfaces:
+        config:
+          - name: "{{ state_port.interfaces }}"
+            trunk:
+              encapsulation: dot1q
+        state: merged
+      loop: "{{ state_ports.list }}"
+      loop_control:
+        loop_var: state_port
+
+    - name: Configure trunk mode for l2 interfaces
+      cisco.ios.ios_l2_interfaces:
+        config:
+          - name: "{{ state_port.interfaces }}"
+            mode: "{{ state_port.state }}"
+        state: merged
+      loop: "{{ state_ports.list }}"
+      loop_control:
+        loop_var: state_port 

@@ -1,0 +1,116 @@
+---
+- hosts: switches_core
+  tasks:
+
+    - name: Read link aggregation groups from CSV file
+      community.general.read_csv:
+        path: "/home/day/ansible/templates/csv_files/SW_Core_Config/Link_Aggregation.csv"
+      register: lag
+      #delegate_to: localhost
+        
+    - name: Aggregation group configurations through CSV file
+      cisco.ios.ios_lag_interfaces:
+        config:
+          - name: "Port-channel{{ item_lag.group }}"
+            members:
+              - member: "{{ item_lag.interfaces }}"
+                mode: "{{ item_lag.mode }}"
+        state: merged
+      loop: "{{ lag.list }}"
+      loop_control:
+        loop_var: item_lag
+
+    - name: Read vlans from CSV file
+      community.general.read_csv:
+        path: "/home/day/ansible/templates/csv_files/SW_Core_Config/Vlan.csv"
+      register: vlans
+      #delegate_to: localhost
+
+    - name: Vlans creation
+      cisco.ios.ios_vlans:
+        config:
+          - name: "{{ vlan.name_vlan }}"
+            vlan_id: "{{ vlan.id_vlan | int }}"
+            state: active
+      loop: "{{ vlans.list }}"
+      loop_control:
+        loop_var: vlan
+
+    - name: Read interfaces state from CSV file
+      community.general.read_csv:
+        path: "/home/day/ansible/templates/csv_files/SW_Core_Config/State_Port_Interfaces.csv"
+      register: state_ports
+    
+    - name: No switchport l3 layer interfaces, switchport l2 layer interfaces and enable the interfaces 
+      cisco.ios.ios_interfaces:
+        config:
+          - name: "{{ state_port.interfaces }}"
+            description:
+            enabled: true
+            mode: "{{ state_port.mode }}"
+        state: merged
+      loop: "{{ state_ports.list }}"
+      loop_control:
+        loop_var: state_port
+
+    - name: Configure dot1q encapsulation for l2 interfaces
+      cisco.ios.ios_l2_interfaces:
+        config:
+          - name: "{{ state_port.interfaces }}"
+            trunk:
+              #native_vlan: 1
+              encapsulation: dot1q
+        state: merged
+      loop: "{{ state_ports.list }}"
+      when: state_port.mode == "layer2"
+      loop_control:
+        loop_var: state_port  
+
+    - name: Configure trunk mode for l2 interfaces
+      cisco.ios.ios_l2_interfaces:
+        config:
+          - name: "{{ state_port.interfaces }}"
+            mode: "{{ state_port.state }}"
+        state: merged
+      loop: "{{ state_ports.list }}"
+      when: state_port.mode == "layer2"
+      loop_control:
+        loop_var: state_port 
+
+    - name: Read l3 interfaces attributes from CSV file
+      community.general.read_csv:
+        path: "/home/day/ansible/templates/csv_files/SW_Core_Config/Interfaces.csv"
+      register: interfaces
+
+    - name: Configure l3 interfaces
+      cisco.ios.ios_l3_interfaces:
+        config:
+          - name: "{{ interface.interfaces_name }}"
+            ipv4:
+              - address: "{{ interface.ip_address }}"
+        state: merged
+      loop: "{{ interfaces.list }}"
+      loop_control:
+        loop_var: interface
+
+    - name: Read hsrp attributes from CSV file
+      community.general.read_csv:
+        path: "/home/day/ansible/templates/csv_files/SW_Core_Config/Hsrp.csv"
+      register: hsrp
+
+    - name: Configure HSRP on the interfaces
+      ios_config:
+        lines:
+          - "interface {{ hsrp_item.interface }}"
+          - standby version 2
+          - "ip address {{ hsrp_item.ip_address }}"
+          - "standby {{ hsrp_item.group }} ip {{ hsrp_item.virtual_ip }}"
+          - "standby {{ hsrp_item.group }} priority {{ hsrp_item.priority }}"
+          - "standby {{ hsrp_item.group }} preempt delay reload {{ hsrp_item.delay_reload }}"
+          - "standby {{ hsrp_item.group }} track {{ hsrp_item.group }} decrement {{ hsrp_item.decrement }}"
+          - no sh
+      loop: "{{ hsrp.list }}"
+      when: inventory_hostname == hsrp_item.device
+      loop_control:
+        loop_var: hsrp_item
+
