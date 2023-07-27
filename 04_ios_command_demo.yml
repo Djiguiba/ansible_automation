@@ -1,14 +1,12 @@
 ---
-- name: Cisco IOS Command Demo
-  hosts: switches_distribution
-
+- name: Test IOS Facts
+  hosts: switches_distibution
   tasks:
-    - name: Execute show commands
-      ios_command:
-        commands:
-          - show run
-          - show ip int brief
-      register: sh_outputs
+    - name: Gather IOS Facts
+      ios_facts:
+        gather_subset: all
+      register: all_subset
 
-    - debug:
-        msg: "{{sh_outputs.stdout_lines}}"
+    - name: Print Subset All
+      debug:
+        var: all_subset
