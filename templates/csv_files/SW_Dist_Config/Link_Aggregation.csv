@@ -1,0 +1,3 @@
+protocol,interfaces,mode,group
+lacp,GigabitEthernet0/0,active,10
+lacp,GigabitEthernet1/3,active,10

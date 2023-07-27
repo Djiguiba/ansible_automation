@@ -1,0 +1,7 @@
+interfaces,state
+GigabitEthernet0/0,trunk
+GigabitEthernet0/1,trunk
+GigabitEthernet0/2,trunk
+GigabitEthernet0/3,trunk
+GigabitEthernet1/0,trunk
+GigabitEthernet1/3,trunk
