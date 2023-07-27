@@ -1,12 +1,19 @@
 ---
-- name: Test IOS Facts
-  hosts: switches_distibution
-  tasks:
-    - name: Gather IOS Facts
-      ios_facts:
-        gather_subset: all
-      register: all_subset
+- name: Cisco Enable password, Debug- Var,msg
+  hosts: routers
+  become: yes
+  become_method: enable
+  vars:
+    ansible_become_pass: itsasecret
 
-    - name: Print Subset All
-      debug:
-        var: all_subset
+  tasks: 
+    - name: Get facts
+      debug: 
+        msg:
+          - "Hostname is : {{ansible_net_hostname}}"
+          - "Image is: {{ansible_net_image}} "
+
+    - name: Execute show command to test enable password
+      ios_command:
+        commands:
+          - show run 
