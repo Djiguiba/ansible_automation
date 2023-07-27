@@ -1,0 +1,14 @@
+---
+- name: Cisco IOS Command Demo
+  hosts: switches_distribution
+
+  tasks:
+    - name: Execute show commands
+      ios_command:
+        commands:
+          - show run
+          - show ip int brief
+      register: sh_outputs
+
+    - debug:
+        msg: "{{sh_outputs.stdout_lines}}"
