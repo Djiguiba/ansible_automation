@@ -4,7 +4,7 @@
 
     - name: Read link aggregation groups from CSV file
       community.general.read_csv:
-        path: "/home/day/ansible/templates/csv_files/SW_Dist_Config/Link_Aggregation.csv"
+        path: "templates/csv_files/SW_Dist_Config/Link_Aggregation.csv"
       register: lag
       delegate_to: localhost
         
@@ -22,7 +22,7 @@
 
     - name: Read vlans from CSV file
       community.general.read_csv:
-        path: "/home/day/ansible/templates/csv_files/SW_Dist_Config/Vlan.csv"
+        path: "templates/csv_files/SW_Dist_Config/Vlan.csv"
       register: vlans
       delegate_to: localhost
 
@@ -38,7 +38,7 @@
 
     - name: Read interfaces state from CSV file
       community.general.read_csv:
-        path: "/home/day/ansible/templates/csv_files/SW_Dist_Config/State_Port_Interfaces.csv"
+        path: "templates/csv_files/SW_Dist_Config/State_Port_Interfaces.csv"
       register: state_ports
     
     - name: Configure interfaces state
