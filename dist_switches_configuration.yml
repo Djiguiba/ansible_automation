@@ -1,5 +1,5 @@
 ---
-- hosts: switches_distribution
+- hosts: distrib_switches
   tasks:
 
     - name: Read link aggregation groups from CSV file
