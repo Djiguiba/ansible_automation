@@ -1,13 +1,13 @@
 ---
 - name: Cisco Enable password, Debug- Var,msg
   hosts: distrib_switches
-  tasks: 
+  tasks:
+    - name: Printing Username
+      debug:
+        msg: "{{ansible_user}}"
+ 
     - name: Get facts
       debug: 
         msg:
           - "Hostname is : {{ansible_net_hostname}}"
           - "Image is: {{ansible_net_image}} "
-    - name: Execute show command to test enable password
-      ios_command:
-        commands:
-          - show run 
